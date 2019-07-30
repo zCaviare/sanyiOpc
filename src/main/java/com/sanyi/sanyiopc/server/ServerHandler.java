@@ -17,7 +17,6 @@ import java.util.Date;
 public class ServerHandler extends SimpleChannelInboundHandler<String> {
 
     private static Ioc ioc;
-    private int n = 0;
     private OPCServer opcServer = new OPCServer();
 
     public DataSource getDataSource() { // 暂不考虑线程同步的问题
@@ -29,21 +28,20 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
     @Override
     protected synchronized void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
         SocketFrame pumps = Json.fromJson(SocketFrame.class, msg);
-        System.err.println(ctx.channel().remoteAddress() + "," + msg + "接收时间:" + new Date() + " 类型：" + pumps.getType());
+        System.err.println(ctx.channel().remoteAddress() + "," /*+ msg */+ "接收时间:" + new Date() + " 类型：" + pumps.getType());
         SocketFrame pump = new SocketFrame();
         try {
             JOpc.coInitialize();
             pump = opcServer.server(pumps);
-            //JOpc.coUninitialize();
         } catch (Exception e) {
-            System.out.println("catch");
             pump.setType("error");
         } finally {
-            System.out.println("finally");
             JOpc.coUninitialize();
             ctx.channel().writeAndFlush(Json.toJson(pump));
+            ReferenceCountUtil.release(pumps);
+            ReferenceCountUtil.release(pump);
+            ReferenceCountUtil.release(msg);
         }
-        ReferenceCountUtil.release(msg);
     }
 
     @Override

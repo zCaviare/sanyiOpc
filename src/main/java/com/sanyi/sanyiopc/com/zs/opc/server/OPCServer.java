@@ -39,11 +39,11 @@ public class OPCServer {
         jopc.addGroup(group);
         //jopc.registerGroups();
         jopc.registerGroup(group);
-        try{
+        try {
             for (OpcItem opcItem : opcItems) {
                 jopc.registerItem(group, opcItem);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw e;
         }
         for (int i = 0; i < jopc.synchReadGroup(group).getItemCount(); i++) {
@@ -53,15 +53,18 @@ public class OPCServer {
             }
             pumps.getPumpdata()[i].setValue(s);
         }
-            /*for(OpcItem opcItem:opcItems){
-                group.removeItem(opcItem);
-            }*/
+        for (OpcItem opcItem : opcItems) {
+            group.removeItem(opcItem);
+        }
+        for (OpcItem opcItem : opcItems) {
+            jopc.unregisterItem(group, opcItem);
+        }
         jopc.unregisterGroup(group);
         return pumps;
     }
 
     public synchronized Boolean update(SocketFrame pumps) throws Exception {
-        for(Pumpdata pumpdata:pumps.getPumpdata()){
+        for (Pumpdata pumpdata : pumps.getPumpdata()) {
             JEasyOpc jopc = new JEasyOpc(host, serverProgID, serverClientHandle);
             OpcGroup group = new OpcGroup(groupName, active, hostupdateRate, percentDeadBand);
             jopc.connect();
